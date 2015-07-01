@@ -1,121 +1,100 @@
 package tf.resizablelabel;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.Icon;
 import javax.swing.JLabel;
-import javax.swing.event.AncestorEvent;
-import javax.swing.event.AncestorListener;
-import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.Graphics;
-import java.awt.Rectangle;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
+
+// Based on: http://stackoverflow.com/questions/9814616
 
 public class ResizableLabel extends JLabel {
-    public static final int MIN_FONT_SIZE = 3;
-    public static final int MAX_FONT_SIZE = 240;
-    private Graphics g;
+    public static final float MAX_FLOAT_FONT_SIZE = 2000f;
+
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(ResizableLabel.class);
+
+
+    private boolean painting = false;
+
 
     public ResizableLabel() {
         super();
-        init();
     }
 
     public ResizableLabel(String text) {
         super(text);
-        init();
     }
 
-    protected void init() {
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentShown(ComponentEvent e) {
-                adaptLabelFont();
-            }
-
-            @Override
-            public void componentResized(ComponentEvent e) {
-                adaptLabelFont();
-            }
-
-            @Override
-            public void componentMoved(ComponentEvent e) {
-                adaptLabelFont();
-            }
-        });
-
-        addAncestorListener(new AncestorListener() {
-            @Override
-            public void ancestorAdded(AncestorEvent event) {
-                adaptLabelFont();
-            }
-
-            @Override
-            public void ancestorRemoved(AncestorEvent event) {
-                // noop
-            }
-
-            @Override
-            public void ancestorMoved(AncestorEvent event) {
-                adaptLabelFont();
-            }
-        });
+    public ResizableLabel(Icon image, int horizontalAlignment) {
+        super(image, horizontalAlignment);
     }
 
-    protected void adaptLabelFont() {
-        if (g == null || getText().isEmpty()) {
+    public ResizableLabel(Icon image) {
+        super(image);
+    }
+
+    public ResizableLabel(String text, Icon icon, int horizontalAlignment) {
+        super(text, icon, horizontalAlignment);
+    }
+
+    public ResizableLabel(String text, int horizontalAlignment) {
+        super(text, horizontalAlignment);
+    }
+
+    private void adaptLabelFont() {
+        if (getText().isEmpty())
             return;
+
+        Font font = getFont();
+        Font auxFont = font.deriveFont(font.getStyle(), MAX_FLOAT_FONT_SIZE);
+
+        double stringWidth = getFontMetrics(auxFont).stringWidth(getText());
+        double parentWidth = getParent().getWidth();
+
+        // Find out how much the font can grow in width.
+        LOGGER.info("parentWidth {}, stringWidth {}", parentWidth, stringWidth);
+        double widthRatio = parentWidth / stringWidth;
+
+        LOGGER.info("fontSize {}, widthRatio {}", auxFont.getSize2D(), widthRatio);
+        float newFontSize = (float) Math.floor(auxFont.getSize2D() * widthRatio);
+        int parentHeight = getParent().getHeight();
+
+        // Pick a new font size so it will not be larger than the height of parent.
+        float fontSizeToUse = Math.min(newFontSize, parentHeight);
+
+        Font newFont = font.deriveFont(font.getStyle(), fontSizeToUse);
+        if (getFontMetrics(newFont).stringWidth(getText()) > parentWidth) {
+            fontSizeToUse --;
+            newFont = font.deriveFont(font.getStyle(), fontSizeToUse);
         }
-        Rectangle r = getBounds();
-        Font f = getFont();
-        Rectangle r1 = new Rectangle();
-        Rectangle r2 = new Rectangle();
-        int fontSize = f.getSize();
 
-        setSizeBasedOnTextSize(r1, fontSize);
-        setSizeBasedOnTextSize(r2, fontSize + 1);
-        if (r.contains(r1) && !r.contains(r2)) {
-            return;
+        // Set the label's font size to the newly determined size.
+        if (font.getSize2D() != fontSizeToUse) {
+            LOGGER.info("font size changed from {} to {}", font.getSize2D(), fontSizeToUse);
+            setFont(newFont);
         }
-
-        fontSize = MIN_FONT_SIZE;
-        while (fontSize < MAX_FONT_SIZE) {
-            setSizeBasedOnTextSize(r1, fontSize);
-            setSizeBasedOnTextSize(r2, fontSize + 1);
-            if (r.contains(r1) && !r.contains(r2)) {
-                break;
-            }
-            fontSize++;
-        }
-
-        setFont(f.deriveFont(f.getStyle(), fontSize));
-        repaint();
-    }
-
-    private void setSizeBasedOnTextSize(Rectangle r, int fontSize) {
-        Font f = getFont();
-        r.setSize(getTextSize(f.deriveFont(f.getStyle(), fontSize)));
-    }
-
-    private Dimension getTextSize(Font f) {
-        Dimension size = new Dimension();
-        g.setFont(f);
-        FontMetrics fm = g.getFontMetrics(f);
-        size.width = fm.stringWidth(getText());
-        size.height = fm.getHeight();
-
-        return size;
     }
 
     @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        this.g = g;
+    public void repaint() {
+        LOGGER.info("repaint {}", !painting);
+        if (!painting) {
+            super.repaint();
+        }
     }
 
     @Override
-    public void setText(String text) {
-        super.setText(text);
-        adaptLabelFont();
+    public void paint(Graphics g) {
+        LOGGER.info("painting {}", painting);
+        if (!painting) {
+            painting = true;
+            LOGGER.info("paint");
+            adaptLabelFont();
+            super.paint(g);
+            painting = false;
+        }
     }
 }
