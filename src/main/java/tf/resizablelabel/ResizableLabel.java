@@ -1,3 +1,11 @@
+/*!
+ * resizable-label
+ * https://github.com/tfoxy/resizable-label
+ *
+ * Copyright 2015 Tomás Fox
+ * Released under the MIT license
+ */
+
 package tf.resizablelabel;
 
 import org.slf4j.Logger;
@@ -8,10 +16,11 @@ import javax.swing.JLabel;
 import java.awt.Font;
 import java.awt.Graphics;
 
-// Based on: http://stackoverflow.com/questions/9814616
-
+/**
+ * Based on: http://stackoverflow.com/questions/9814616
+ */
 public class ResizableLabel extends JLabel {
-    public static final float MAX_FLOAT_FONT_SIZE = 2000f;
+    public static final float LARGE_FONT_SIZE = 2000f;
 
     private static final Logger LOGGER =
             LoggerFactory.getLogger(ResizableLabel.class);
@@ -44,21 +53,22 @@ public class ResizableLabel extends JLabel {
         super(text, horizontalAlignment);
     }
 
-    private void adaptLabelFont() {
+    void adaptLabelFont() {
         if (getText().isEmpty())
             return;
 
         Font font = getFont();
-        Font auxFont = font.deriveFont(font.getStyle(), MAX_FLOAT_FONT_SIZE);
+        Font auxFont = font.deriveFont(font.getStyle(), LARGE_FONT_SIZE);
 
+        // stringWidth returns an int. So it is more precise to use a font with a large size
         double stringWidth = getFontMetrics(auxFont).stringWidth(getText());
         double parentWidth = getParent().getWidth();
 
         // Find out how much the font can grow in width.
-        LOGGER.info("parentWidth {}, stringWidth {}", parentWidth, stringWidth);
+        LOGGER.debug("parentWidth {}, stringWidth {}", parentWidth, stringWidth);
         double widthRatio = parentWidth / stringWidth;
 
-        LOGGER.info("fontSize {}, widthRatio {}", auxFont.getSize2D(), widthRatio);
+        LOGGER.debug("fontSize {}, widthRatio {}", auxFont.getSize2D(), widthRatio);
         float newFontSize = (float) Math.floor(auxFont.getSize2D() * widthRatio);
         int parentHeight = getParent().getHeight();
 
@@ -66,21 +76,24 @@ public class ResizableLabel extends JLabel {
         float fontSizeToUse = Math.min(newFontSize, parentHeight);
 
         Font newFont = font.deriveFont(font.getStyle(), fontSizeToUse);
+
+        // Sometimes with the new font, the width exceeds the parent width.
+        // Fix it by decrementing the font size
         if (getFontMetrics(newFont).stringWidth(getText()) > parentWidth) {
-            fontSizeToUse --;
+            fontSizeToUse--;
             newFont = font.deriveFont(font.getStyle(), fontSizeToUse);
         }
 
         // Set the label's font size to the newly determined size.
         if (font.getSize2D() != fontSizeToUse) {
-            LOGGER.info("font size changed from {} to {}", font.getSize2D(), fontSizeToUse);
+            LOGGER.debug("font size changed from {} to {}", font.getSize2D(), fontSizeToUse);
             setFont(newFont);
         }
     }
 
     @Override
     public void repaint() {
-        LOGGER.info("repaint {}", !painting);
+        LOGGER.debug("repaint {}", !painting);
         if (!painting) {
             super.repaint();
         }
@@ -88,10 +101,10 @@ public class ResizableLabel extends JLabel {
 
     @Override
     public void paint(Graphics g) {
-        LOGGER.info("painting {}", painting);
+        LOGGER.debug("painting {}", painting);
         if (!painting) {
             painting = true;
-            LOGGER.info("paint");
+            LOGGER.debug("paint");
             adaptLabelFont();
             super.paint(g);
             painting = false;

@@ -1,31 +1,30 @@
+/*!
+ * resizable-label
+ * https://github.com/tfoxy/resizable-label
+ *
+ * Copyright 2015 Tomás Fox
+ * Released under the MIT license
+ */
+
 package tf.resizablelabel;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import java.awt.Font;
+
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.junit.Assert.assertThat;
 
 public class ResizableLabelTest {
-    private static final Logger LOGGER =
-            LoggerFactory.getLogger(ResizableLabelTest.class);
-
-    private static void sleep(int millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e.getMessage(), e.getCause());
-        }
-    }
-
     private ResizableLabel label;
 
     @Before
-    public void initialize() {
+    public void setUp() {
         label = new ResizableLabel();
     }
 
@@ -39,25 +38,53 @@ public class ResizableLabelTest {
     }
 
     @Test
-    public void showFrame() {
+    public void increasesFontSizeWhenParentIsBigger() {
         label.setText("FooBar");
+
+        float size = label.getFont().getSize2D();
 
         JPanel jPanel = new JPanel();
         jPanel.setSize(200, 100);
 
-        LOGGER.info("Add to panel");
         jPanel.add(label);
 
-        JFrame frame = new JFrame();
-        frame.setSize(300, 150);
+        label.adaptLabelFont();
 
-        LOGGER.info("Add to frame");
-        frame.add(label);
+        assertThat(label.getFont().getSize2D(), greaterThan(size));
+    }
 
-        LOGGER.info("Visible frame");
-        frame.setVisible(true);
+    @Test
+    public void changesFontSizeToFillTheContainer() {
+        label.setText("FooBar");
 
-        LOGGER.info("Sleep");
-        sleep(100000);
+        JPanel panel = new JPanel();
+        panel.setSize(300, 150);
+
+        panel.add(label);
+
+        label.adaptLabelFont();
+
+        Assert.assertEquals(75, label.getFont().getSize2D(), 0);
+    }
+
+    @Test
+    public void doesNotExceedsContainerWidth() {
+        label.setText("FooBar");
+
+        JPanel panel = new JPanel();
+
+        panel.add(label);
+
+        for (int panelWidth = 200; panelWidth <= 500; ++panelWidth) {
+            panel.setSize(panelWidth, 150);
+
+            label.adaptLabelFont();
+
+            Font font = label.getFont();
+            String text = label.getText();
+            int labelWidth = label.getFontMetrics(font).stringWidth(text);
+
+            assertThat(panel.getWidth(), greaterThanOrEqualTo(labelWidth));
+        }
     }
 }
