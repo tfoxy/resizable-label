@@ -25,9 +25,10 @@
     </licenses>
 
     <scm>
-        <url>https://github.com/tfoxy/resizable-label</url>
-        <connection>scm:git:git://github.com/tfoxy/resizable-label.git</connection>
+        <connection>scm:git:git@github.com:tfoxy/resizable-label.git</connection>
         <developerConnection>scm:git:git@github.com:tfoxy/resizable-label.git</developerConnection>
+        <url>scm:git:git@github.com:tfoxy/resizable-label.git</url>
+        <tag>HEAD</tag>
     </scm>
 
     <developers>
