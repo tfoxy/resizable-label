@@ -6,7 +6,7 @@
  * Released under the MIT license
  */
 
-package tf.resizablelabel;
+package com.github.tfoxy.resizablelabel;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

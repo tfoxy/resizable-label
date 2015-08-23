@@ -6,7 +6,7 @@
  * Released under the MIT license
  */
 
-package tf.resizablelabel;
+package com.github.tfoxy.resizablelabel;
 
 import org.junit.Assert;
 import org.junit.Before;
