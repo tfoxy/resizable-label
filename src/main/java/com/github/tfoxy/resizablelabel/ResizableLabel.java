@@ -17,7 +17,13 @@ import java.awt.Font;
 import java.awt.Graphics;
 
 /**
- * Based on: http://stackoverflow.com/questions/9814616
+ * <p>
+ *     A JLabel component that is automatically resized to fit its text.
+ *     The size is updated every time the component is painted.
+ * </p>
+ * <p>
+ *     Based on: <a href="http://stackoverflow.com/questions/9814616">http://stackoverflow.com/questions/9814616</a>
+ * </p>
  */
 public class ResizableLabel extends JLabel {
     public static final float LARGE_FONT_SIZE = 2000f;
